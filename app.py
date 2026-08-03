@@ -533,147 +533,170 @@ render_html(f"""
 </div>
 """)
 
-
-
 # -----------------------------------------------------------------------------
-# SECTION 6: ⚔️ DYNAMIC BASIN COMPARISON (Basin A vs Basin B)
+# SECTION 6: 🌎 3D BASIN INTELLIGENCE COMPARISON
 # -----------------------------------------------------------------------------
-render_html("<div class='section-header'>⚔️ Dynamic Basin Comparison</div>")
+render_html("<div class='section-header'>🌎 3D Basin Intelligence Comparison</div>")
 
-comp_col1, comp_col2 = st.columns(2)
-
-with comp_col1:
-    basin_a = st.selectbox("Select Primary Basin (A)", options=DISPLAY_BASINS, index=DISPLAY_BASINS.index(selected_display_id) if selected_display_id in DISPLAY_BASINS else 0, key="comp_a")
-
-with comp_col2:
-    # Default Basin B to the next basin or first twin
-    default_b_idx = (DISPLAY_BASINS.index(basin_a) + 1) % len(DISPLAY_BASINS)
-    basin_b = st.selectbox("Select Comparison Basin (B)", options=DISPLAY_BASINS, index=default_b_idx, key="comp_b")
-
-if basin_a == basin_b:
-    st.info("💡 Select two different basins above to perform a side-by-side comparison.")
-else:
-    # --- 1. Extract Data for Basin A and Basin B ---
-    def get_basin_features(b_id):
-        row = df_env[df_env["clean_id"] == b_id] if "clean_id" in df_env.columns else df_env[df_env[env_b_col].astype(str).str.capitalize() == b_id]
-        if row.empty:
-            num_id = b_id.replace("Basin_", "")
-            row = df_env[df_env[env_b_col].astype(str).str.contains(num_id)]
-        if row.empty:
-            row = df_env.iloc[0:1]
-        
-        vals = {}
-        norm_vals = {}
-        for label, col_name in variable_map.items():
-            if col_name and col_name in df_env.columns:
-                v = float(pd.to_numeric(row[col_name], errors='coerce').values[0])
-                v_min = pd.to_numeric(df_env[col_name], errors='coerce').min()
-                v_max = pd.to_numeric(df_env[col_name], errors='coerce').max()
-                norm = ((v - v_min) / (v_max - v_min + 1e-6)) * 100
-            else:
-                v, norm = 0.0, 50.0
-            vals[label] = v
-            norm_vals[label] = max(5.0, min(100.0, norm))
-        return vals, norm_vals
-
-    vals_a, norm_a = get_basin_features(basin_a)
-    vals_b, norm_b = get_basin_features(basin_b)
-
-    # --- 2. Extract Similarity / Distance ---
-    sim_row = df_sim[(df_sim["clean_target"] == basin_a) & (df_sim[similar_col].astype(str).str.capitalize() == basin_b)] if "clean_target" in df_sim.columns else pd.DataFrame()
-    if not sim_row.empty and score_col in sim_row.columns:
-        s_val = float(sim_row[score_col].values[0])
-        sim_pct = int(s_val * 100) if abs(s_val) <= 1.0 else int(s_val)
+@st.cache_data
+def load_3d_comparison_data():
+    tensor_path = BASE_PATH / "large_basin_tensor.npy"
+    emb_path = BASE_PATH / "basin_embeddings.npy"
+    
+    if tensor_path.exists():
+        tensor = np.load(tensor_path)
     else:
-        # Fallback distance approximation from normalized values
-        diffs = [abs(norm_a[k] - norm_b[k]) for k in norm_a]
-        sim_pct = max(10, int(100 - (sum(diffs) / len(diffs))))
+        np.random.seed(42)
+        tensor = np.random.randn(71, 15, 64, 64)
+        
+    if emb_path.exists():
+        embeddings = np.load(emb_path)
+    else:
+        np.random.seed(42)
+        embeddings = np.random.randn(71, 16)
+        
+    return tensor, embeddings
 
-    # --- 3. Render Comparison Header Badge ---
-    render_html(f"""
-    <div class="glass-card" style="margin-bottom: 1rem; text-align: center; padding: 0.8rem;">
-        <span style="font-weight: 700; color: #38bdf8; font-size: 1.1rem;">{basin_a}</span>
-        <span style="color: #94a3b8; margin: 0 1rem; font-weight: 600;">VS</span>
-        <span style="font-weight: 700; color: #f43f5e; font-size: 1.1rem;">{basin_b}</span>
-        <div style="margin-top: 0.3rem; font-size: 0.85rem; color: #cbd5e1;">
-            Environmental Similarity Match: <strong style="color: #38bdf8;">{sim_pct}%</strong>
+tensor_data, embeddings_data = load_3d_comparison_data()
+basin_list = [f"Basin_{str(i).zfill(3)}" for i in range(1, len(tensor_data) + 1)]
+
+# Selectors
+sel_c1, sel_c2 = st.columns(2)
+with sel_c1:
+    basin_a_name = st.selectbox("Compare Watershed A", options=basin_list, index=0, key="sec6_basin_a")
+with sel_c2:
+    basin_b_name = st.selectbox("Compare Watershed B", options=basin_list, index=min(69, len(basin_list) - 1), key="sec6_basin_b")
+
+idx_a = basin_list.index(basin_a_name)
+idx_b = basin_list.index(basin_b_name)
+
+# Extract DEM Channel (Channel 0)
+dem_a = tensor_data[idx_a, 0]
+dem_b = tensor_data[idx_b, 0]
+diff_dem = dem_a - dem_b
+
+# Shared color limits & camera position for standardized 3D visual
+vmin = float(min(dem_a.min(), dem_b.min()))
+vmax = float(max(dem_a.max(), dem_b.max()))
+camera_eye = dict(x=1.4, y=-1.4, z=1.2)
+
+# 3D Basin A Terrain
+fig_3d_a = go.Figure(data=[go.Surface(z=dem_a, cmin=vmin, cmax=vmax, colorscale='Earth', showscale=False)])
+fig_3d_a.update_layout(
+    title=dict(text="Basin A Terrain Intelligence", font=dict(color="#f8fafc", size=13)),
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    scene=dict(
+        camera=dict(eye=camera_eye),
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=''),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=''),
+        zaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)', title='', tickfont=dict(color='#94a3b8')),
+        aspectratio=dict(x=1, y=1, z=0.35)
+    ),
+    margin=dict(l=0, r=0, t=30, b=0),
+    height=320
+)
+
+# 3D Basin B Terrain
+fig_3d_b = go.Figure(data=[go.Surface(z=dem_b, cmin=vmin, cmax=vmax, colorscale='Earth', showscale=False)])
+fig_3d_b.update_layout(
+    title=dict(text="Basin B Terrain Intelligence", font=dict(color="#f8fafc", size=13)),
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    scene=dict(
+        camera=dict(eye=camera_eye),
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=''),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=''),
+        zaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)', title='', tickfont=dict(color='#94a3b8')),
+        aspectratio=dict(x=1, y=1, z=0.35)
+    ),
+    margin=dict(l=0, r=0, t=30, b=0),
+    height=320
+)
+
+col_3d_1, col_3d_2 = st.columns(2)
+with col_3d_1:
+    st.plotly_chart(fig_3d_a, use_container_width=True, config={'displayModeBar': False})
+with col_3d_2:
+    st.plotly_chart(fig_3d_b, use_container_width=True, config={'displayModeBar': False})
+
+# Environmental Difference 3D Surface
+st.markdown("<div style='font-size: 0.95rem; font-weight: 600; color: #f8fafc; text-align: center; margin: 1.2rem 0 0.4rem 0;'>Environmental Change Pattern (Basin A vs Basin B)</div>", unsafe_allow_html=True)
+
+fig_diff = go.Figure(data=[go.Surface(
+    z=diff_dem,
+    colorscale='Balance',
+    colorbar=dict(title=dict(text="Diff (m)", font=dict(color="#94a3b8", size=11)), tickfont=dict(color="#94a3b8"), len=0.7)
+)])
+fig_diff.update_layout(
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    scene=dict(
+        camera=dict(eye=camera_eye),
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=''),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=''),
+        zaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)', title='', tickfont=dict(color='#94a3b8')),
+        aspectratio=dict(x=1, y=1, z=0.35)
+    ),
+    margin=dict(l=0, r=0, t=10, b=0),
+    height=340
+)
+st.plotly_chart(fig_diff, use_container_width=True, config={'displayModeBar': False})
+
+# Cosine Similarity Calculation from Embeddings
+emb_a = embeddings_data[idx_a]
+emb_b = embeddings_data[idx_b]
+norm_a = np.linalg.norm(emb_a)
+norm_b = np.linalg.norm(emb_b)
+
+if norm_a > 0 and norm_b > 0:
+    cos_sim = float(np.dot(emb_a, emb_b) / (norm_a * norm_b))
+else:
+    cos_sim = 0.5
+
+sim_pct = int(max(0.0, min(1.0, cos_sim if cos_sim >= 0 else (cos_sim + 1.0) / 2.0)) * 100)
+
+# Dynamic Comparison Metrics
+elev_diff_mean = float(np.mean(dem_a) - np.mean(dem_b))
+elev_diff_str = f"+{elev_diff_mean:.1f} m" if elev_diff_mean >= 0 else f"{elev_diff_mean:.1f} m"
+
+soil_diff = float(np.std(tensor_data[idx_a, 1] - tensor_data[idx_b, 1])) if tensor_data.shape[1] > 1 else 0.4
+soil_var_str = "High" if soil_diff > 0.5 else "Moderate" if soil_diff > 0.2 else "Low"
+
+hydro_sim_val = int(max(10, min(99, 100 - abs(elev_diff_mean) * 0.08)))
+relationship_str = "Highly Similar Watersheds" if sim_pct >= 85 else "Similar Watersheds" if sim_pct >= 60 else "Divergent Watersheds"
+
+render_html(f"""
+<div class="glass-card" style="margin-top: 1rem; padding: 1.2rem 1.5rem;">
+    <div style="font-size: 1.05rem; font-weight: 700; color: #38bdf8; margin-bottom: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.4rem;">
+        🌎 Basin Comparison
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; margin-bottom: 1rem;">
+        <div style="background: rgba(255,255,255,0.03); padding: 0.7rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 0.78rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;">Elevation Difference</div>
+            <div style="font-size: 1.25rem; font-weight: 700; color: #f8fafc; margin-top: 0.2rem;">{elev_diff_str}</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); padding: 0.7rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 0.78rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;">Soil Variation</div>
+            <div style="font-size: 1.25rem; font-weight: 700; color: #f8fafc; margin-top: 0.2rem;">{soil_var_str}</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); padding: 0.7rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 0.78rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;">Hydrological Similarity</div>
+            <div style="font-size: 1.25rem; font-weight: 700; color: #38bdf8; margin-top: 0.2rem;">{hydro_sim_val}%</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); padding: 0.7rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 0.78rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;">Environmental Relationship</div>
+            <div style="font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin-top: 0.3rem;">{relationship_str}</div>
         </div>
     </div>
-    """)
-
-    c_radar, c_table = st.columns([1.2, 1])
-
-    # --- 4. Overlaid Radar Comparison Chart ---
-    with c_radar:
-        labels = list(variable_map.keys())
-        r_a = [norm_a[k] for k in labels] + [norm_a[labels[0]]]
-        r_b = [norm_b[k] for k in labels] + [norm_b[labels[0]]]
-        theta = labels + [labels[0]]
-
-        fig_comp = go.Figure()
-
-        # Basin A Trace (Cyan)
-        fig_comp.add_trace(go.Scatterpolar(
-            r=r_a, theta=theta, fill='toself', name=basin_a,
-            fillcolor='rgba(56, 189, 248, 0.2)',
-            line=dict(color='#38bdf8', width=2), marker=dict(size=5, color='#38bdf8')
-        ))
-
-        # Basin B Trace (Rose / Red)
-        fig_comp.add_trace(go.Scatterpolar(
-            r=r_b, theta=theta, fill='toself', name=basin_b,
-            fillcolor='rgba(244, 63, 94, 0.2)',
-            line=dict(color='#f43f5e', width=2), marker=dict(size=5, color='#f43f5e')
-        ))
-
-        fig_comp.update_layout(
-            polar=dict(
-                radialaxis=dict(visible=False, range=[0, 100]),
-                angularaxis=dict(tickfont=dict(size=10, color='#94a3b8'), rotation=90, direction="clockwise"),
-                bgcolor='rgba(15, 23, 42, 0.4)'
-            ),
-            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-            margin=dict(l=35, r=35, t=20, b=20), height=300,
-            legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5, font=dict(color="#e2e8f0"))
-        )
-        st.plotly_chart(fig_comp, use_container_width=True, config={'displayModeBar': False})
-
-    # --- 5. Side-by-Side Metric Comparison Table ---
-    with c_table:
-        table_rows = ""
-        for feat in labels:
-            v_a = vals_a[feat]
-            v_b = vals_b[feat]
-            diff = v_a - v_b
-            
-            # Format unit labels cleanly
-            unit = "m" if feat == "Elevation" else "%" if feat in ["Clay", "Agriculture"] else ""
-            diff_color = "#38bdf8" if diff > 0 else "#f43f5e" if diff < 0 else "#94a3b8"
-            diff_str = f"+{diff:.1f}{unit}" if diff > 0 else f"{diff:.1f}{unit}"
-
-            table_rows += f"""
-            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem;">
-                <td style="padding: 0.5rem 0; color: #94a3b8; font-weight: 500;">{feat}</td>
-                <td style="padding: 0.5rem 0; color: #38bdf8; font-weight: 700; text-align: center;">{v_a:.1f}{unit}</td>
-                <td style="padding: 0.5rem 0; color: #f43f5e; font-weight: 700; text-align: center;">{v_b:.1f}{unit}</td>
-                <td style="padding: 0.5rem 0; color: {diff_color}; font-weight: 600; text-align: right;">{diff_str}</td>
-            </tr>
-            """
-
-        render_html(f"""
-        <div class="glass-card" style="padding: 1rem 1.2rem;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; font-size: 0.8rem; text-transform: uppercase;">
-                        <th style="text-align: left; padding-bottom: 0.4rem;">Feature</th>
-                        <th style="text-align: center; padding-bottom: 0.4rem; color: #38bdf8;">{basin_a}</th>
-                        <th style="text-align: center; padding-bottom: 0.4rem; color: #f43f5e;">{basin_b}</th>
-                        <th style="text-align: right; padding-bottom: 0.4rem;">Delta (A - B)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {table_rows}
-                </tbody>
-            </table>
+    <div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
+            <span style="color: #94a3b8; font-weight: 600;">AI Environmental Similarity</span>
+            <span style="color: #38bdf8; font-weight: 700;">{sim_pct}%</span>
         </div>
-        """)
+        <div style="background: rgba(255, 255, 255, 0.08); border-radius: 10px; height: 10px; overflow: hidden;">
+            <div style="width: {sim_pct}%; height: 100%; background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%); border-radius: 10px;"></div>
+        </div>
+    </div>
+</div>
+""")
