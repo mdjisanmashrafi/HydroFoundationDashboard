@@ -449,20 +449,40 @@ st.markdown("<div class='section-header'>🧠 AI Understanding</div>", unsafe_al
 
 st.markdown("<div style='font-size: 0.95rem; font-weight: 600; color: #94a3b8; margin-bottom: 1rem;'>What does AI consider important?</div>", unsafe_allow_html=True)
 
-att_data = df_att[df_att["basin_id"] == selected_display_id]
-if att_data.empty:
+att_data = df_att[df_att["basin_id"] == selected_display_id].copy()
+
+if not att_data.empty:
+    # Dynamically detect feature name column and score column
+    cols = [c for c in att_data.columns if c != "basin_id"]
+    
+    # Identify feature/variable column
+    feat_candidates = [c for c in cols if c.lower() in ["feature", "variable", "attribute", "name"]]
+    feature_col = feat_candidates[0] if feat_candidates else cols[0]
+    
+    # Identify value/score column
+    val_candidates = [c for c in cols if c != feature_col]
+    val_col_name = val_candidates[0] if val_candidates else cols[-1]
+    
+    # Sort values descending
+    att_data = att_data.sort_values(val_col_name, ascending=False)
+else:
+    feature_col = "feature"
+    val_col_name = "attention_pct"
     att_data = pd.DataFrame({
         "feature": ["Agriculture", "Clay", "Hydraulic Conductivity", "Elevation", "Bulk Density"],
         "attention_pct": [42.0, 25.0, 18.0, 10.0, 5.0]
     })
-else:
-    att_data = att_data.sort_values("attention_pct", ascending=False)
 
-# Custom Animated HTML Progress Bars
+# Render Custom Animated HTML Progress Bars
 bars_html = "<div class='glass-card' style='padding: 1.2rem 1.5rem;'>"
 for _, row in att_data.iterrows():
-    feat_name = row["feature"]
-    pct = float(row["attention_pct"])
+    feat_name = str(row[feature_col])
+    pct = float(row[val_col_name])
+    
+    # Auto-convert decimal probabilities (e.g. 0.42) into percentages (42%)
+    if att_data[val_col_name].max() <= 1.0:
+        pct = pct * 100
+        
     bars_html += f"""
     <div class="att-bar-container">
         <div class="att-bar-header">
@@ -470,13 +490,12 @@ for _, row in att_data.iterrows():
             <span style="color: #38bdf8; font-weight: 700;">{pct:.1f}%</span>
         </div>
         <div class="att-bar-bg">
-            <div class="att-bar-fill" style="width: {pct}%;"></div>
+            <div class="att-bar-fill" style="width: {min(pct, 100):.1f}%;"></div>
         </div>
     </div>
     """
 bars_html += "</div>"
 st.markdown(bars_html, unsafe_allow_html=True)
-
 
 # -----------------------------------------------------------------------------
 # SECTION 4: 🌐 BASIN INTELLIGENCE GALAXY
