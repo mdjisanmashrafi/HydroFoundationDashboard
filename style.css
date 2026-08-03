@@ -1,126 +1,157 @@
-/* Color Palette */
-:root {
-    --forest-green: #2d6a4f;
-    --deep-blue: #1b4965;
-    --dark-gray: #343a40;
-    --white: #ffffff;
-    --bg-color: #f8f9fa;
-    --shadow-color: rgba(0, 0, 0, 0.08);
+/* style.css - Modern clean design for HydroFoundation Basin Explorer */
+
+/* Reset and base */
+.main {
+    padding: 0rem 2rem;
 }
 
-/* Hide Default Streamlit Elements for a clean Single Page App feel */
-[data-testid="stHeader"] { display: none !important; }
-[data-testid="stSidebar"] { display: none !important; }
-footer { visibility: hidden !important; }
-.block-container {
-    padding-top: 2rem !important;
-    padding-bottom: 2rem !important;
-    max-width: 1400px !important;
+[data-testid="stAppViewContainer"] {
+    background: #f8fafc;
 }
 
-/* Typography */
-.main-title {
+[data-testid="stHeader"] {
+    background: transparent;
+}
+
+/* Hide default elements */
+#MainMenu {
+    visibility: hidden;
+}
+
+footer {
+    visibility: hidden;
+}
+
+.stDeployButton {
+    display: none;
+}
+
+/* Header */
+.header-container {
     text-align: center;
-    color: var(--deep-blue);
-    font-size: 2.8rem;
+    padding: 2rem 0 1.5rem 0;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 2rem;
+}
+
+.header-title {
+    font-size: 2.5rem;
     font-weight: 700;
-    margin-bottom: 0.5rem;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #0a1628;
     letter-spacing: -0.5px;
 }
 
-.custom-divider {
-    border: 0;
-    height: 1px;
-    background: linear-gradient(to right, transparent, rgba(45, 106, 79, 0.2), transparent);
-    margin-bottom: 3rem;
+.header-title span {
+    background: linear-gradient(135deg, #1a365d, #2d6a8f);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-/* Streamlit Selectbox Customization */
-div[data-testid="stSelectbox"] > div {
-    max-width: 400px;
-    margin: 0 auto;
-}
-div[data-testid="stSelectbox"] label p {
-    font-size: 1.1rem;
-    color: var(--forest-green);
-    font-weight: 600;
-    text-align: center;
-}
-div[data-baseweb="select"] > div {
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    background-color: var(--white);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-    transition: all 0.3s ease;
-}
-div[data-baseweb="select"] > div:hover {
-    border-color: var(--forest-green);
+.header-subtitle {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-top: 0.3rem;
+    font-weight: 300;
 }
 
-/* Card Containers & Centering */
-.card-container {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    margin-bottom: 3rem;
-}
-
-/* Beautiful Image Cards */
-.img-card {
-    background: rgba(255, 255, 255, 0.85); /* subtle glass effect */
-    backdrop-filter: blur(8px);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px var(--shadow-color);
-    overflow: hidden;
-    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), 
-                box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    border: 1px solid rgba(0,0,0,0.04);
-    display: flex;
-    flex-direction: column;
-}
-
-/* Hover Effect on the Card */
-.img-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.15);
-}
-
-/* Card Titles */
-.card-title {
-    text-align: center;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--dark-gray);
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #f1f3f5;
-    background-color: var(--white);
-    letter-spacing: 0.3px;
-    font-family: "Helvetica Neue", Helvetica, sans-serif;
-}
-
-/* Image Wrapper and Zoom Effect */
-.img-wrapper {
-    overflow: hidden;
+/* Selector */
+.selector-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0;
-    background-color: var(--bg-color);
+    gap: 1rem;
+    padding: 1rem 0 2rem 0;
 }
 
-.img-wrapper img {
+.selector-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+/* Image cards */
+.image-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.image-card:hover {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.image-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #718096;
+    text-align: center;
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.image-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f7fafc;
+    position: relative;
+}
+
+.image-wrapper img {
     width: 100%;
     height: auto;
     display: block;
-    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 0.3s ease;
 }
 
-.img-card:hover .img-wrapper img {
-    transform: scale(1.04);
+.image-wrapper:hover img {
+    transform: scale(1.02);
 }
 
-/* Width Classes */
-.width-100 { width: 100%; margin-bottom: 0; }
-.width-80 { width: 75%; }
-.width-70 { width: 70%; }
+/* Custom select box */
+.stSelectbox > div > div {
+    border-radius: 10px !important;
+    border: 2px solid #e2e8f0 !important;
+    background: white !important;
+    min-width: 200px;
+}
+
+.stSelectbox label {
+    display: none !important;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 2rem 0 1rem 0;
+    color: #a0aec0;
+    font-size: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main {
+        padding: 0rem 1rem;
+    }
+
+    .header-title {
+        font-size: 1.8rem;
+    }
+
+    .selector-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .image-card {
+        padding: 0.8rem;
+    }
+}
