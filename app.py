@@ -18,7 +18,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Glassmorphism CSS Injector
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -145,9 +144,17 @@ div[data-testid="stSelectbox"] > div {
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# Helper to render clean HTML safely without markdown code block triggers
 def render_html(html_str):
     st.markdown(textwrap.dedent(html_str).strip(), unsafe_allow_html=True)
+
+def find_col(df, possible_names):
+    """Case-insensitive fuzzy column matching."""
+    for c in df.columns:
+        c_clean = str(c).lower().strip().replace("_", " ")
+        for p in possible_names:
+            if p.lower().strip().replace("_", " ") in c_clean:
+                return c
+    return None
 
 # -----------------------------------------------------------------------------
 # 2. DATA LOADERS & PATH RESOLUTION
@@ -267,27 +274,50 @@ render_html("<div class='section-header'>🧬 Environmental DNA</div>")
 
 dna_col1, dna_col2 = st.columns([1.3, 1])
 
-env_b_col = next((c for c in df_env.columns if c.lower() in ["basin_id", "basin"]), df_env.columns[0])
-basin_env_data = df_env[df_env[env_b_col].astype(str).str.capitalize() == selected_display_id]
-if basin_env_data.empty: basin_env_data = df_env.iloc[0:1]
+env_b_col = find_col(df_env, ["basin_id", "basin", "target_basin", "id"]) or df_env.columns[0]
 
-variables = ["Elevation", "Clay", "Bulk Density", "Hydraulic Conductivity", "Agriculture"]
+# Dynamic row extraction
+df_env["clean_id"] = df_env[env_b_col].astype(str).str.capitalize()
+basin_env_data = df_env[df_env["clean_id"] == selected_display_id]
+
+if basin_env_data.empty:
+    num_id = selected_display_id.replace("Basin_", "")
+    basin_env_data = df_env[df_env[env_b_col].astype(str).str.contains(num_id)]
+if basin_env_data.empty:
+    basin_env_data = df_env.iloc[0:1]
+
+# Dynamic column mapping
+c_elev = find_col(df_env, ["elevation", "elev", "height"])
+c_clay = find_col(df_env, ["clay", "clay_content", "clay_pct"])
+c_bd   = find_col(df_env, ["bulk density", "bulk_density", "bd", "density"])
+c_ksat = find_col(df_env, ["hydraulic conductivity", "hydraulic_conductivity", "ksat", "perm"])
+c_agri = find_col(df_env, ["agriculture", "agri", "crop", "land_use"])
+
+variable_map = {
+    "Elevation": c_elev,
+    "Clay": c_clay,
+    "Bulk Density": c_bd,
+    "Hydraulic Conductivity": c_ksat,
+    "Agriculture": c_agri
+}
+
 radar_vals, raw_vals = [], {}
 
-for var in variables:
-    if var in df_env.columns:
-        v_min, v_max = df_env[var].min(), df_env[var].max()
-        val = float(basin_env_data[var].values[0])
-        raw_vals[var] = val
+for var_label, col_name in variable_map.items():
+    if col_name and col_name in df_env.columns:
+        v_min = pd.to_numeric(df_env[col_name], errors='coerce').min()
+        v_max = pd.to_numeric(df_env[col_name], errors='coerce').max()
+        val = float(pd.to_numeric(basin_env_data[col_name], errors='coerce').values[0])
+        raw_vals[var_label] = val
         norm = ((val - v_min) / (v_max - v_min + 1e-6)) * 100
-        radar_vals.append(norm)
+        radar_vals.append(max(5.0, min(100.0, norm)))
     else:
-        radar_vals.append(50)
-        raw_vals[var] = 0.0
+        radar_vals.append(50.0)
+        raw_vals[var_label] = 0.0
 
 with dna_col1:
     fig_radar = go.Figure(go.Scatterpolar(
-        r=radar_vals + [radar_vals[0]], theta=variables + [variables[0]],
+        r=radar_vals + [radar_vals[0]], theta=list(variable_map.keys()) + [list(variable_map.keys())[0]],
         fill='toself', fillcolor='rgba(56, 189, 248, 0.25)',
         line=dict(color='#38bdf8', width=2), marker=dict(size=6, color='#0284c7')
     ))
@@ -304,18 +334,30 @@ with dna_col1:
     st.markdown("<div style='text-align: center; color: #64748b; font-size: 0.8rem;'>Unique watershed environmental signature</div>", unsafe_allow_html=True)
 
 with dna_col2:
-    elev, agri, clay, cond = raw_vals.get("Elevation", 0), raw_vals.get("Agriculture", 0), raw_vals.get("Clay", 0), raw_vals.get("Hydraulic Conductivity", 0)
-    sens_score = min(99, max(15, int((agri * 0.4) + (clay * 0.6) + 20)))
+    elev = raw_vals.get("Elevation", 0)
+    agri = raw_vals.get("Agriculture", 0)
+    clay = raw_vals.get("Clay", 0)
+    cond = raw_vals.get("Hydraulic Conductivity", 0)
+    
+    # Format Dynamic Text
+    terrain_str = f"High ({elev:.0f}m)" if elev > 800 else f"Moderate ({elev:.0f}m)" if elev > 250 else f"Low ({elev:.0f}m)"
+    agri_str = f"High ({agri:.1f}%)" if agri > 40 or agri > 0.4 else f"Moderate ({agri:.1f}%)" if agri > 15 or agri > 0.15 else f"Low ({agri:.1f}%)"
+    soil_str = f"Clay Dominated ({clay:.1f}%)" if clay > 25 or clay > 0.25 else f"Loam / Sand ({clay:.1f}%)"
+    perm_str = f"High Permeability" if cond > 5.0 or cond > 0.5 else f"Low Permeability"
+    
+    # Dynamic Sensitivity percentage
+    sens_score = int(radar_vals[1] * 0.5 + radar_vals[4] * 0.5) if len(radar_vals) >= 5 else 50
+    sens_score = max(15, min(98, sens_score))
     
     render_html(f"""
     <div class="dna-card">
         <div style="font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin-bottom: 0.6rem; border-bottom: 1px solid rgba(56,189,248,0.2); padding-bottom: 0.3rem;">
             {selected_display_id} DNA
         </div>
-        <div class="dna-item"><span class="dna-label">🌄 Terrain</span><span class="dna-value">{'High' if elev > 1200 else 'Moderate' if elev > 500 else 'Low'} ({elev:.0f}m)</span></div>
-        <div class="dna-item"><span class="dna-label">🌱 Land Use</span><span class="dna-value">{'High' if agri > 50 else 'Moderate' if agri > 20 else 'Low'} Agriculture</span></div>
-        <div class="dna-item"><span class="dna-label">🟫 Soil</span><span class="dna-value">{'Clay dominated' if clay > 25 else 'Loam / Sand'}</span></div>
-        <div class="dna-item"><span class="dna-label">💧 Water Movement</span><span class="dna-value">{'High' if cond > 8 else 'Low'} permeability</span></div>
+        <div class="dna-item"><span class="dna-label">🌄 Terrain</span><span class="dna-value">{terrain_str}</span></div>
+        <div class="dna-item"><span class="dna-label">🌱 Land Use</span><span class="dna-value">{agri_str}</span></div>
+        <div class="dna-item"><span class="dna-label">🟫 Soil</span><span class="dna-value">{soil_str}</span></div>
+        <div class="dna-item"><span class="dna-label">💧 Water Movement</span><span class="dna-value">{perm_str}</span></div>
         <div class="dna-item"><span class="dna-label">🔥 AI Risk</span><span class="dna-value" style="color: #f87171;">{sens_score}% Sensitivity</span></div>
     </div>
     """)
@@ -326,13 +368,14 @@ with dna_col2:
 render_html("<div class='section-header'>🧠 AI Understanding</div>")
 st.markdown("<div style='font-size: 0.95rem; font-weight: 600; color: #94a3b8; margin-bottom: 0.8rem;'>What does AI consider important?</div>", unsafe_allow_html=True)
 
-att_b_col = next((c for c in df_att.columns if c.lower() in ["basin_id", "basin", "target_basin"]), df_att.columns[0])
-att_data = df_att[df_att[att_b_col].astype(str).str.capitalize() == selected_display_id].copy()
+att_b_col = find_col(df_att, ["basin_id", "basin", "target_basin", "id"]) or df_att.columns[0]
+df_att["clean_id"] = df_att[att_b_col].astype(str).str.capitalize()
+att_data = df_att[df_att["clean_id"] == selected_display_id].copy()
 
 if not att_data.empty:
-    cols = [c for c in att_data.columns if c != att_b_col]
-    feature_col = next((c for c in cols if c.lower() in ["feature", "variable", "attribute", "name"]), cols[0])
-    val_col_name = next((c for c in cols if c != feature_col), cols[-1])
+    cols = [c for c in att_data.columns if c not in [att_b_col, "clean_id"]]
+    feature_col = find_col(att_data, ["feature", "variable", "attribute", "name"]) or cols[0]
+    val_col_name = [c for c in cols if c != feature_col][0] if len(cols) > 1 else cols[-1]
     
     att_data["raw_val"] = pd.to_numeric(att_data[val_col_name], errors="coerce").fillna(0.0)
     att_data["abs_val"] = att_data["raw_val"].abs()
@@ -376,7 +419,7 @@ render_html("<div class='section-header'>🌐 Basin Intelligence Galaxy</div>")
 
 galaxy_c1, galaxy_c2 = st.columns([2, 1])
 
-emb_b_col = next((c for c in df_emb.columns if c.lower() in ["basin_id", "basin", "target_basin", "id"]), df_emb.columns[0])
+emb_b_col = find_col(df_emb, ["basin_id", "basin", "target_basin", "id"]) or df_emb.columns[0]
 num_cols = df_emb.select_dtypes(include=[np.number]).columns
 
 if len(num_cols) >= 2:
@@ -389,11 +432,12 @@ df_galaxy = pd.DataFrame({
     "x": coords[:, 0], "y": coords[:, 1]
 })
 
-target_col = next((c for c in df_sim.columns if c.lower() in ["target_basin", "basin_id", "basin"]), df_sim.columns[0])
-similar_col = next((c for c in df_sim.columns if c.lower() in ["similar_basin", "twin_basin", "neighbor"]), df_sim.columns[1] if len(df_sim.columns)>1 else df_sim.columns[0])
-score_col = next((c for c in df_sim.columns if c.lower() in ["similarity_score", "similarity", "score"]), df_sim.columns[-1])
+target_col = find_col(df_sim, ["target_basin", "basin_id", "basin"]) or df_sim.columns[0]
+similar_col = find_col(df_sim, ["similar_basin", "twin_basin", "neighbor"]) or (df_sim.columns[1] if len(df_sim.columns)>1 else df_sim.columns[0])
+score_col = find_col(df_sim, ["similarity_score", "similarity", "score"]) or df_sim.columns[-1]
 
-sim_matches = df_sim[df_sim[target_col].astype(str).str.capitalize() == selected_display_id]
+df_sim["clean_target"] = df_sim[target_col].astype(str).str.capitalize()
+sim_matches = df_sim[df_sim["clean_target"] == selected_display_id]
 similar_ids = sim_matches[similar_col].astype(str).str.capitalize().tolist()[:3] if not sim_matches.empty else []
 
 df_galaxy["Type"] = df_galaxy["basin_id"].apply(lambda b: "Selected Basin" if b == selected_display_id else ("Environmental Twin" if b in similar_ids else "Other Watersheds"))
@@ -440,17 +484,31 @@ with galaxy_c2:
 # -----------------------------------------------------------------------------
 render_html("<div class='section-header'>🔥 Watershed Risk</div>")
 
-vuln_b_col = next((c for c in df_vuln.columns if c.lower() in ["basin_id", "basin", "target_basin"]), df_vuln.columns[0])
-vuln_s_col = next((c for c in df_vuln.columns if c != vuln_b_col), df_vuln.columns[-1])
+vuln_b_col = find_col(df_vuln, ["basin_id", "basin", "target_basin"]) or df_vuln.columns[0]
+vuln_s_col = find_col(df_vuln, ["vulnerability", "score", "risk"]) or ([c for c in df_vuln.columns if c != vuln_b_col][0] if len(df_vuln.columns) > 1 else df_vuln.columns[-1])
 
 df_vuln_sorted = df_vuln.copy()
 df_vuln_sorted["clean_id"] = df_vuln_sorted[vuln_b_col].astype(str).str.capitalize()
-df_vuln_sorted[vuln_s_col] = pd.to_numeric(df_vuln_sorted[vuln_s_col], errors="coerce").fillna(0)
-df_vuln_sorted = df_vuln_sorted.sort_values(vuln_s_col, ascending=False).reset_index(drop=True)
+df_vuln_sorted["raw_score"] = pd.to_numeric(df_vuln_sorted[vuln_s_col], errors="coerce").fillna(0)
+
+# SMART AUTO-RESCALE: Converts ratio decimals (e.g. 0.07-0.95) into 0-100 percentage scale
+max_raw = df_vuln_sorted["raw_score"].max()
+if max_raw <= 1.0 and max_raw > 0:
+    df_vuln_sorted["scaled_score"] = df_vuln_sorted["raw_score"] * 100.0
+elif max_raw <= 10.0 and max_raw > 0:
+    df_vuln_sorted["scaled_score"] = df_vuln_sorted["raw_score"] * 10.0
+else:
+    df_vuln_sorted["scaled_score"] = df_vuln_sorted["raw_score"]
+
+df_vuln_sorted = df_vuln_sorted.sort_values("scaled_score", ascending=False).reset_index(drop=True)
 df_vuln_sorted["rank"] = df_vuln_sorted.index + 1
 
 target_row = df_vuln_sorted[df_vuln_sorted["clean_id"] == selected_display_id]
-v_score = float(target_row[vuln_s_col].values[0]) if not target_row.empty else 50.0
+if target_row.empty:
+    num_id = selected_display_id.replace("Basin_", "")
+    target_row = df_vuln_sorted[df_vuln_sorted["clean_id"].str.contains(num_id)]
+
+v_score = float(target_row["scaled_score"].values[0]) if not target_row.empty else 50.0
 v_rank = int(target_row["rank"].values[0]) if not target_row.empty else 35
 total_basins = len(df_vuln_sorted)
 
