@@ -535,7 +535,6 @@ render_html(f"""
 </div>
 """)
 
-
 # -----------------------------------------------------------------------------
 # SECTION 6: 🌎 3D BASIN INTELLIGENCE COMPARISON
 # -----------------------------------------------------------------------------
@@ -552,11 +551,11 @@ def load_3d_comparison_data():
     else:
         np.random.seed(42)
         tensor = np.random.randn(71, 15, 64, 64)
-        # Apply realistic per-basin elevation offsets & soil scaling
+        # Apply realistic per-basin elevation offsets & channel scaling
         for i in range(len(tensor)):
             basin_elevation_base = 150 + (i * 32.5) + np.sin(i * 0.5) * 200
             tensor[i, 0] = (tensor[i, 0] * 120) + basin_elevation_base  # DEM channel
-            tensor[i, 1] = (tensor[i, 1] * 5) + (10 + (i % 7) * 4)       # Soil/Clay channel
+            tensor[i, 1] = (tensor[i, 1] * 5) + (10 + (i % 7) * 4)       # Soil channel
             
     if emb_path.exists():
         embeddings = np.load(emb_path)
@@ -569,7 +568,7 @@ def load_3d_comparison_data():
 tensor_data, embeddings_data = load_3d_comparison_data()
 basin_list = [f"Basin_{str(i).zfill(3)}" for i in range(1, len(tensor_data) + 1)]
 
-# Glassmorphic Selection Controls
+# Selection Controls
 sel_c1, sel_c2 = st.columns(2)
 with sel_c1:
     basin_a_name = st.selectbox("Watershed A", options=basin_list, index=0, key="sec6_basin_a")
@@ -655,7 +654,7 @@ fig_diff.update_layout(
 )
 st.plotly_chart(fig_diff, use_container_width=True, config={'displayModeBar': False})
 
-# Dynamic Metric & Cosine Similarity Calculation
+# Dynamic Cosine Similarity & Metric Calculations
 emb_a = embeddings_data[idx_a]
 emb_b = embeddings_data[idx_b]
 norm_a = np.linalg.norm(emb_a)
@@ -668,50 +667,26 @@ else:
 
 sim_pct = int(max(0.0, min(1.0, (cos_sim + 1.0) / 2.0 if cos_sim < 0 else cos_sim)) * 100)
 
-# Robust Metric Calculations
+# Elevation Delta & Hydro Similarity
 elev_diff_mean = float(np.mean(dem_a) - np.mean(dem_b))
 elev_diff_str = f"+{elev_diff_mean:.1f} m" if elev_diff_mean >= 0 else f"{elev_diff_mean:.1f} m"
 
-# Soil variation channel check
-soil_a_std = np.std(tensor_data[idx_a, 1]) if tensor_data.shape[1] > 1 else 1.0
-soil_b_std = np.std(tensor_data[idx_b, 1]) if tensor_data.shape[1] > 1 else 1.0
-soil_delta = abs(soil_a_std - soil_b_std)
-soil_var_str = "High Divergence" if soil_delta > 3.0 else "Moderate" if soil_delta > 1.0 else "Homogeneous"
-
-# Hydrological Similarity derived dynamically from both topography delta and vector embedding similarity
 topo_sim_factor = max(0, 100 - (abs(elev_diff_mean) / 15.0))
 hydro_sim_val = int(max(12, min(98, (sim_pct * 0.6) + (topo_sim_factor * 0.4))))
-
-if sim_pct >= 80:
-    relationship_str = "Environmental Twins"
-elif sim_pct >= 60:
-    relationship_str = "Analogous Watersheds"
-elif sim_pct >= 40:
-    relationship_str = "Moderate Divergence"
-else:
-    relationship_str = "Divergent Profiles"
 
 render_html(f"""
 <div class="glass-panel" style="margin-top: 1.5rem; padding: 1.5rem;">
     <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; color: #38bdf8; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
         🌎 Comparative Analytics: {basin_a_name} vs {basin_b_name}
     </div>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-        <div style="background: rgba(15, 23, 42, 0.6); padding: 0.9rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 0.9rem 1.2rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
             <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Elevation Delta</div>
             <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 700; color: #f8fafc; margin-top: 0.2rem;">{elev_diff_str}</div>
         </div>
-        <div style="background: rgba(15, 23, 42, 0.6); padding: 0.9rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Soil Variation</div>
-            <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; font-weight: 700; color: #f8fafc; margin-top: 0.2rem;">{soil_var_str}</div>
-        </div>
-        <div style="background: rgba(15, 23, 42, 0.6); padding: 0.9rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 0.9rem 1.2rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
             <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Hydro Similarity</div>
             <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 700; color: #38bdf8; margin-top: 0.2rem;">{hydro_sim_val}%</div>
-        </div>
-        <div style="background: rgba(15, 23, 42, 0.6); padding: 0.9rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">AI Relationship</div>
-            <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin-top: 0.3rem;">{relationship_str}</div>
         </div>
     </div>
     <div>
