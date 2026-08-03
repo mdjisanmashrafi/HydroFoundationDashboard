@@ -413,23 +413,28 @@ for _, row in att_data.iterrows():
 render_html(f'<div class="glass-card" style="padding: 1.2rem 1.5rem;">{bars_inner}</div>')
 
 # -----------------------------------------------------------------------------
-# SECTION 4: 🌐 BASIN INTELLIGENCE GALAXY
+# SECTION 4: 🌐 BASIN INTELLIGENCE GALAXY (3D NEURAL CONSTELLATION)
 # -----------------------------------------------------------------------------
 render_html("<div class='section-header'>🌐 Basin Intelligence Galaxy</div>")
 
-galaxy_c1, galaxy_c2 = st.columns([2, 1])
+galaxy_c1, galaxy_c2 = st.columns([2.2, 1])
 
+# Column Resolution
 emb_b_col = find_col(df_emb, ["basin_id", "basin", "target_basin", "id"]) or df_emb.columns[0]
 num_cols = df_emb.select_dtypes(include=[np.number]).columns
 
-if len(num_cols) >= 2:
-    coords = df_emb[["dim1", "dim2"]].values if "dim1" in df_emb.columns else PCA(n_components=2).fit_transform(df_emb[num_cols].fillna(0))
+# Generate 3D Spatial Embeddings (PCA 3-Component Projection)
+if len(num_cols) >= 3 and all(c in df_emb.columns for c in ["dim1", "dim2", "dim3"]):
+    coords = df_emb[["dim1", "dim2", "dim3"]].values
+elif len(num_cols) >= 1:
+    coords = PCA(n_components=3).fit_transform(df_emb[num_cols].fillna(0))
 else:
-    coords = np.random.randn(len(df_emb), 2)
+    np.random.seed(42)
+    coords = np.random.randn(len(df_emb), 3)
 
 df_galaxy = pd.DataFrame({
     "basin_id": df_emb[emb_b_col].astype(str).str.capitalize(),
-    "x": coords[:, 0], "y": coords[:, 1]
+    "x": coords[:, 0], "y": coords[:, 1], "z": coords[:, 2]
 })
 
 target_col = find_col(df_sim, ["target_basin", "basin_id", "basin"]) or df_sim.columns[0]
@@ -440,44 +445,122 @@ df_sim["clean_target"] = df_sim[target_col].astype(str).str.capitalize()
 sim_matches = df_sim[df_sim["clean_target"] == selected_display_id]
 similar_ids = sim_matches[similar_col].astype(str).str.capitalize().tolist()[:3] if not sim_matches.empty else []
 
-df_galaxy["Type"] = df_galaxy["basin_id"].apply(lambda b: "Selected Basin" if b == selected_display_id else ("Environmental Twin" if b in similar_ids else "Other Watersheds"))
+# Data Splits
+selected_row = df_galaxy[df_galaxy["basin_id"] == selected_display_id]
+twin_rows = df_galaxy[df_galaxy["basin_id"].isin(similar_ids)]
+other_rows = df_galaxy[~df_galaxy["basin_id"].isin([selected_display_id] + similar_ids)]
 
-with galaxy_c1:
-    fig_galaxy = px.scatter(
-        df_galaxy, x="x", y="y", hover_name="basin_id", color="Type",
-        color_discrete_map={"Selected Basin": "#ef4444", "Environmental Twin": "#38bdf8", "Other Watersheds": "#334155"},
-        size=df_galaxy["Type"].map({"Selected Basin": 16, "Environmental Twin": 11, "Other Watersheds": 6})
-    )
-    fig_galaxy.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(15, 23, 42, 0.6)',
+fig_galaxy = go.Figure()
+
+# 1. Background Galaxy Stars (Other Watersheds)
+fig_galaxy.add_trace(go.Scatter3d(
+    x=other_rows["x"], y=other_rows["y"], z=other_rows["z"],
+    mode="markers",
+    hoverinfo="text",
+    hovertext=other_rows["basin_id"],
+    marker=dict(size=4, color="#334155", opacity=0.65, symbol="circle"),
+    name="Other Watersheds"
+))
+
+# 2. Constellation Laser Lines (Target -> Twins)
+if not selected_row.empty and not twin_rows.empty:
+    x0, y0, z0 = selected_row["x"].values[0], selected_row["y"].values[0], selected_row["z"].values[0]
+    
+    line_x, line_y, line_z = [], [], []
+    for _, t_row in twin_rows.iterrows():
+        line_x.extend([x0, t_row["x"], None])
+        line_y.extend([y0, t_row["y"], None])
+        line_z.extend([z0, t_row["z"], None])
+
+    fig_galaxy.add_trace(go.Scatter3d(
+        x=line_x, y=line_y, z=line_z,
+        mode="lines",
+        line=dict(color="#38bdf8", width=5),
+        hoverinfo="none",
+        name="Neural Links"
+    ))
+
+# 3. Environmental Twins (Glowing Cyan Nodes)
+if not twin_rows.empty:
+    fig_galaxy.add_trace(go.Scatter3d(
+        x=twin_rows["x"], y=twin_rows["y"], z=twin_rows["z"],
+        mode="markers+text",
+        hoverinfo="text",
+        hovertext=twin_rows["basin_id"],
+        text=twin_rows["basin_id"],
+        textposition="top center",
+        textfont=dict(color="#38bdf8", size=10),
+        marker=dict(size=9, color="#38bdf8", opacity=0.95, symbol="diamond", line=dict(color="#0284c7", width=1)),
+        name="Environmental Twins"
+    ))
+
+# 4. Target Selected Basin (Glowing Red Beacon)
+if not selected_row.empty:
+    fig_galaxy.add_trace(go.Scatter3d(
+        x=selected_row["x"], y=selected_row["y"], z=selected_row["z"],
+        mode="markers+text",
+        hoverinfo="text",
+        hovertext=f"Selected: {selected_display_id}",
+        text=[f"🎯 {selected_display_id}"],
+        textposition="top center",
+        textfont=dict(color="#f87171", size=11),
+        marker=dict(size=14, color="#ef4444", opacity=1.0, symbol="circle", line=dict(color="#ffffff", width=2)),
+        name="Selected Basin"
+    ))
+
+# 3D Layout & Atmospheric Styling
+fig_galaxy.update_layout(
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    scene=dict(
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=""),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=""),
-        margin=dict(l=10, r=10, t=10, b=10), height=280,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="#94a3b8"))
-    )
+        zaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=""),
+        bgcolor='rgba(11, 15, 25, 0.8)',
+        camera=dict(eye=dict(x=1.3, y=-1.3, z=1.1))
+    ),
+    margin=dict(l=0, r=0, t=0, b=0),
+    height=340,
+    showlegend=False
+)
+
+with galaxy_c1:
     st.plotly_chart(fig_galaxy, use_container_width=True, config={'displayModeBar': False})
 
 with galaxy_c2:
     st.markdown("<div style='font-size: 0.95rem; font-weight: 600; color: #f8fafc; margin-bottom: 0.6rem;'>Closest Environmental Twins</div>", unsafe_allow_html=True)
     
     twins_inner = ""
+    tags = ["🧬 Hydro Clone", "🌐 Regional Twin", "🛰 Climatic Mirror"]
+    
     if not sim_matches.empty:
-        for _, r in sim_matches.head(3).iterrows():
+        for idx, (_, r) in enumerate(sim_matches.head(3).iterrows()):
             s_id = str(r[similar_col]).capitalize()
             try:
                 s_val = float(r[score_col])
                 pct_val = int(s_val * 100) if abs(s_val) <= 1.0 else int(s_val)
             except (ValueError, TypeError):
                 pct_val = 85
+                
+            tag_label = tags[idx % len(tags)]
+            
             twins_inner += f"""
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                <span style="font-weight: 600; color: #e2e8f0;">{s_id}</span>
-                <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">{pct_val}%</span>
+            <div style="padding: 0.6rem 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                    <div>
+                        <span style="font-weight: 700; color: #f8fafc; font-size: 0.95rem;">{s_id}</span>
+                        <span style="font-size: 0.72rem; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.4rem;">{tag_label}</span>
+                    </div>
+                    <span style="color: #38bdf8; font-weight: 800; font-size: 0.9rem;">{pct_val}%</span>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 6px; height: 6px; overflow: hidden;">
+                    <div style="width: {pct_val}%; height: 100%; background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%);"></div>
+                </div>
             </div>"""
     else:
-        twins_inner = "<div style='color: #64748b;'>No similarity data available</div>"
+        twins_inner = "<div style='color: #64748b; padding: 1rem 0;'>No similarity data available</div>"
         
-    render_html(f'<div class="glass-card" style="padding: 0.8rem 1rem;">{twins_inner}</div>')
+    render_html(f'<div class="glass-card" style="padding: 1rem 1.2rem;">{twins_inner}</div>')
 
 # -----------------------------------------------------------------------------
 # SECTION 5: 🔥 WATERSHED RISK ASSESSMENT
