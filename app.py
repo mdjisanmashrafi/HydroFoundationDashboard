@@ -411,7 +411,6 @@ for _, row in att_data.iterrows():
     </div>"""
 
 render_html(f'<div class="glass-card" style="padding: 1.2rem 1.5rem;">{bars_inner}</div>')
-
 # -----------------------------------------------------------------------------
 # SECTION 4: 🌐 BASIN INTELLIGENCE GALAXY (3D NEURAL CONSTELLATION)
 # -----------------------------------------------------------------------------
@@ -508,7 +507,7 @@ if not selected_row.empty:
         name="Selected Basin"
     ))
 
-# 3D Layout & Atmospheric Styling
+# 3D Layout & Atmospheric Styling (STABILIZED CAMERA CONTROLS)
 fig_galaxy.update_layout(
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
@@ -517,7 +516,12 @@ fig_galaxy.update_layout(
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=""),
         zaxis=dict(showgrid=False, zeroline=False, showticklabels=False, title=""),
         bgcolor='rgba(11, 15, 25, 0.8)',
-        camera=dict(eye=dict(x=1.3, y=-1.3, z=1.1))
+        camera=dict(
+            eye=dict(x=1.3, y=-1.3, z=1.1),
+            center=dict(x=0, y=0, z=0)
+        ),
+        dragmode='orbit',      # <--- Locks axis for smooth, controlled mouse drag
+        aspectmode='cube'      # <--- Standardizes aspect ratio to prevent camera acceleration
     ),
     margin=dict(l=0, r=0, t=0, b=0),
     height=340,
@@ -525,7 +529,12 @@ fig_galaxy.update_layout(
 )
 
 with galaxy_c1:
-    st.plotly_chart(fig_galaxy, use_container_width=True, config={'displayModeBar': False})
+    # Disable scrollZoom in config to stop wild trackpad/mouse-wheel zooming
+    st.plotly_chart(
+        fig_galaxy, 
+        use_container_width=True, 
+        config={'displayModeBar': False, 'scrollZoom': False}
+    )
 
 with galaxy_c2:
     st.markdown("<div style='font-size: 0.95rem; font-weight: 600; color: #f8fafc; margin-bottom: 0.6rem;'>Closest Environmental Twins</div>", unsafe_allow_html=True)
