@@ -381,7 +381,7 @@ with col2:
         st.info("No AI interpretation")
 
 # ============================================
-# INTERACTIVE MAP
+# INTERACTIVE MAP - Fixed Version
 # ============================================
 
 st.markdown('<div class="gallery-title">Interactive Basin Explorer</div>', unsafe_allow_html=True)
@@ -393,12 +393,15 @@ map_data = pd.DataFrame({
     'basin': [f"Basin {i:03d}" for i in range(1, total_basins + 1)]
 })
 
+# Create size column with highlighted basin
 map_data['size'] = 10
 map_data.loc[basin_id - 1, 'size'] = 25
-map_data['color'] = '#2d6a8f'
-map_data.loc[basin_id - 1, 'color'] = '#fc8181'
 
-st.map(map_data[['lat', 'lon']], size=map_data['size'], color=map_data['color'])
+# Use st.map without color parameter (uses default coloring)
+st.map(map_data[['lat', 'lon']], size=map_data['size'])
+
+# Add a note about the highlighted basin
+st.caption(f"📍 Basin {basin_id:03d} highlighted in the map above")
 
 # ============================================
 # FOOTER
