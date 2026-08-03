@@ -116,10 +116,6 @@ if 'basin_id' not in st.session_state:
     st.session_state.basin_id = 1
 if 'theme' not in st.session_state:
     st.session_state.theme = 'dark'
-if 'fullscreen' not in st.session_state:
-    st.session_state.fullscreen = False
-if 'fullscreen_image' not in st.session_state:
-    st.session_state.fullscreen_image = None
 
 # ============================================
 # DATA LOADING
@@ -386,22 +382,24 @@ with col2:
 
 st.markdown('<div class="gallery-title">Interactive Basin Explorer</div>', unsafe_allow_html=True)
 
-np.random.seed(42)
-map_data = pd.DataFrame({
-    'lat': np.random.uniform(25, 45, total_basins),
-    'lon': np.random.uniform(-125, -65, total_basins),
-    'basin': [f"Basin {i:03d}" for i in range(1, total_basins + 1)]
-})
-
-# Create size column with highlighted basin
-map_data['size'] = 10
-map_data.loc[basin_id - 1, 'size'] = 25
-
-# Use st.map without color parameter (uses default coloring)
-st.map(map_data[['lat', 'lon']], size=map_data['size'])
-
-# Add a note about the highlighted basin
-st.caption(f"📍 Basin {basin_id:03d} highlighted in the map above")
+try:
+    np.random.seed(42)
+    map_data = pd.DataFrame({
+        'lat': np.random.uniform(25, 45, total_basins),
+        'lon': np.random.uniform(-125, -65, total_basins),
+        'size': np.ones(total_basins) * 10
+    })
+    
+    # Highlight selected basin with larger size
+    map_data.loc[basin_id - 1, 'size'] = 30
+    
+    # Use st.map with size parameter as column name
+    st.map(map_data, size='size')
+    st.caption(f"📍 Basin {basin_id:03d} highlighted with larger marker")
+    
+except Exception as e:
+    st.warning("Map visualization unavailable. Please check data format.")
+    st.caption(f"Error: {str(e)[:100]}...")
 
 # ============================================
 # FOOTER
