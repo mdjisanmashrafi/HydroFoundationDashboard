@@ -446,56 +446,57 @@ with dna_col2:
 # SECTION 3: 🧠 AI ATTENTION FINGERPRINT
 # -----------------------------------------------------------------------------
 st.markdown("<div class='section-header'>🧠 AI Understanding</div>", unsafe_allow_html=True)
-
 st.markdown("<div style='font-size: 0.95rem; font-weight: 600; color: #94a3b8; margin-bottom: 1rem;'>What does AI consider important?</div>", unsafe_allow_html=True)
 
-att_data = df_att[df_att["basin_id"] == selected_display_id].copy()
+# Detect basin column dynamically
+att_basin_col = next((c for c in df_att.columns if c.lower() in ["basin_id", "basin", "target_basin"]), df_att.columns[0])
+att_data = df_att[df_att[att_basin_col].astype(str).str.capitalize() == selected_display_id].copy()
 
 if not att_data.empty:
-    # Dynamically detect feature name column and score column
-    cols = [c for c in att_data.columns if c != "basin_id"]
+    cols = [c for c in att_data.columns if c != att_basin_col]
+    feature_col = next((c for c in cols if c.lower() in ["feature", "variable", "attribute", "name"]), cols[0])
+    val_col_name = next((c for c in cols if c != feature_col), cols[-1])
     
-    # Identify feature/variable column
-    feat_candidates = [c for c in cols if c.lower() in ["feature", "variable", "attribute", "name"]]
-    feature_col = feat_candidates[0] if feat_candidates else cols[0]
-    
-    # Identify value/score column
-    val_candidates = [c for c in cols if c != feature_col]
-    val_col_name = val_candidates[0] if val_candidates else cols[-1]
-    
-    # Sort values descending
-    att_data = att_data.sort_values(val_col_name, ascending=False)
+    att_data["raw_val"] = pd.to_numeric(att_data[val_col_name], errors="coerce").fillna(0.0)
+    att_data["abs_val"] = att_data["raw_val"].abs()
+    att_data = att_data.sort_values("abs_val", ascending=False)
 else:
     feature_col = "feature"
-    val_col_name = "attention_pct"
     att_data = pd.DataFrame({
         "feature": ["Agriculture", "Clay", "Hydraulic Conductivity", "Elevation", "Bulk Density"],
-        "attention_pct": [42.0, 25.0, 18.0, 10.0, 5.0]
+        "raw_val": [42.0, 25.0, 18.0, 10.0, 5.0],
+        "abs_val": [42.0, 25.0, 18.0, 10.0, 5.0]
     })
 
-# Render Custom Animated HTML Progress Bars
+# Render HTML progress bars safely with positive widths
+max_val = max(att_data["abs_val"].max(), 1e-6)
 bars_html = "<div class='glass-card' style='padding: 1.2rem 1.5rem;'>"
+
 for _, row in att_data.iterrows():
     feat_name = str(row[feature_col])
-    pct = float(row[val_col_name])
+    val = float(row["raw_val"])
+    abs_v = float(row["abs_val"])
     
-    # Auto-convert decimal probabilities (e.g. 0.42) into percentages (42%)
-    if att_data[val_col_name].max() <= 1.0:
-        pct = pct * 100
-        
+    # Calculate visual fill width (always between 0% and 100%)
+    width_pct = (abs_v / max_val) * 100 if max_val > 1.0 else abs_v * 100
+    width_pct = max(0.0, min(100.0, width_pct))
+    
+    display_pct = val * 100 if abs(val) <= 1.0 else val
+
     bars_html += f"""
     <div class="att-bar-container">
         <div class="att-bar-header">
             <span style="color: #e2e8f0; font-weight: 500;">{feat_name}</span>
-            <span style="color: #38bdf8; font-weight: 700;">{pct:.1f}%</span>
+            <span style="color: #38bdf8; font-weight: 700;">{display_pct:.1f}%</span>
         </div>
         <div class="att-bar-bg">
-            <div class="att-bar-fill" style="width: {min(pct, 100):.1f}%;"></div>
+            <div class="att-bar-fill" style="width: {width_pct:.1f}%;"></div>
         </div>
     </div>
     """
 bars_html += "</div>"
 st.markdown(bars_html, unsafe_allow_html=True)
+
 
 # -----------------------------------------------------------------------------
 # SECTION 4: 🌐 BASIN INTELLIGENCE GALAXY
@@ -504,7 +505,9 @@ st.markdown("<div class='section-header'>🌐 Basin Intelligence Galaxy</div>", 
 
 galaxy_c1, galaxy_c2 = st.columns([2, 1])
 
-# Extract/Compute 2D coordinates for embeddings
+# Dynamic Column Resolution for df_emb
+emb_basin_col = next((c for c in df_emb.columns if c.lower() in ["basin_id", "basin", "target_basin", "id"]), df_emb.columns[0])
+
 num_cols = df_emb.select_dtypes(include=[np.number]).columns
 if len(num_cols) >= 2:
     if "dim1" in df_emb.columns and "dim2" in df_emb.columns:
@@ -516,22 +519,22 @@ else:
     coords = np.random.randn(len(df_emb), 2)
 
 df_galaxy = pd.DataFrame({
-    "basin_id": df_emb["basin_id"],
+    "basin_id": df_emb[emb_basin_col].astype(str).str.capitalize(),
     "x": coords[:, 0],
     "y": coords[:, 1]
 })
 
-# Find Closest Environmental Twins from similarity table
-sim_matches = df_sim[df_sim["basin_id"] == selected_display_id]
-if sim_matches.empty and "target_basin" in df_sim.columns:
-    sim_matches = df_sim[df_sim["target_basin"] == selected_display_id]
+# Dynamic Column Resolution for df_sim (fixes the KeyError)
+target_col = next((c for c in df_sim.columns if c.lower() in ["target_basin", "basin_id", "basin", "source_basin"]), df_sim.columns[0])
+similar_col = next((c for c in df_sim.columns if c.lower() in ["similar_basin", "twin_basin", "neighbor", "similar"]), df_sim.columns[1] if len(df_sim.columns) > 1 else df_sim.columns[0])
+score_col = next((c for c in df_sim.columns if c.lower() in ["similarity_score", "similarity", "score", "distance", "weight"]), df_sim.columns[-1])
+
+sim_matches = df_sim[df_sim[target_col].astype(str).str.capitalize() == selected_display_id]
 
 similar_ids = []
 if not sim_matches.empty:
-    sim_col = "similar_basin" if "similar_basin" in sim_matches.columns else sim_matches.columns[1]
-    similar_ids = sim_matches[sim_col].tolist()[:3]
+    similar_ids = sim_matches[similar_col].astype(str).str.capitalize().tolist()[:3]
 
-# Categorize basins for scatter coloring
 def get_node_type(b_id):
     if b_id == selected_display_id:
         return "Selected Basin"
@@ -568,11 +571,13 @@ with galaxy_c2:
     
     twins_html = "<div class='glass-card' style='padding: 0.8rem 1rem;'>"
     if not sim_matches.empty:
-        score_col = "similarity_score" if "similarity_score" in sim_matches.columns else sim_matches.columns[-1]
         for _, r in sim_matches.head(3).iterrows():
-            s_id = r[sim_col]
-            s_val = float(r[score_col])
-            pct_val = int(s_val * 100) if s_val <= 1.0 else int(s_val)
+            s_id = str(r[similar_col]).capitalize()
+            try:
+                s_val = float(r[score_col])
+                pct_val = int(s_val * 100) if abs(s_val) <= 1.0 else int(s_val)
+            except (ValueError, TypeError):
+                pct_val = 90
             twins_html += f"""
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <span style="font-weight: 600; color: #e2e8f0;">{s_id}</span>
@@ -590,13 +595,18 @@ with galaxy_c2:
 # -----------------------------------------------------------------------------
 st.markdown("<div class='section-header'>🔥 Watershed Risk</div>", unsafe_allow_html=True)
 
-score_col = "vulnerability_score" if "vulnerability_score" in df_vuln.columns else df_vuln.columns[-1]
-df_vuln_sorted = df_vuln.sort_values(score_col, ascending=False).reset_index(drop=True)
+vuln_basin_col = next((c for c in df_vuln.columns if c.lower() in ["basin_id", "basin", "target_basin"]), df_vuln.columns[0])
+vuln_score_col = next((c for c in df_vuln.columns if c != vuln_basin_col), df_vuln.columns[-1])
+
+df_vuln_sorted = df_vuln.copy()
+df_vuln_sorted["clean_id"] = df_vuln_sorted[vuln_basin_col].astype(str).str.capitalize()
+df_vuln_sorted[vuln_score_col] = pd.to_numeric(df_vuln_sorted[vuln_score_col], errors="coerce").fillna(0)
+df_vuln_sorted = df_vuln_sorted.sort_values(vuln_score_col, ascending=False).reset_index(drop=True)
 df_vuln_sorted["rank"] = df_vuln_sorted.index + 1
 
-target_row = df_vuln_sorted[df_vuln_sorted["basin_id"] == selected_display_id]
+target_row = df_vuln_sorted[df_vuln_sorted["clean_id"] == selected_display_id]
 if not target_row.empty:
-    v_score = float(target_row[score_col].values[0])
+    v_score = float(target_row[vuln_score_col].values[0])
     v_rank = int(target_row["rank"].values[0])
 else:
     v_score, v_rank = 50.0, 35
