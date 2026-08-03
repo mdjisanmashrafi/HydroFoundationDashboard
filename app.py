@@ -14,6 +14,7 @@ from sklearn.decomposition import PCA
 from scipy.spatial.distance import cdist
 import base64
 from io import BytesIO
+from sklearn.cluster import KMeans
 
 # ============================================
 # PAGE CONFIGURATION
@@ -468,7 +469,7 @@ if page == "🌎 Watershed Explorer":
             
             if dem is not None and basin_idx < len(dem):
                 fig.add_trace(
-                    go.Heatmap(z=dem[basin_idx], colorscale='Terrain', showscale=False),
+                    go.Heatmap(z=dem[basin_idx], colorscale='Viridis', showscale=False),
                     row=1, col=1
                 )
             
@@ -649,10 +650,10 @@ elif page == "🛰 Digital Twin":
         
         terrain = dem[basin_idx]
         
-        # Create 3D surface
+        # Create 3D surface with explicit colorscale
         fig = go.Figure(data=[go.Surface(
             z=terrain,
-            colorscale='Terrain',
+            colorscale='Viridis',
             showscale=True,
             hovertemplate='Elevation: %{z:.1f}<extra></extra>'
         )])
@@ -729,45 +730,57 @@ else:  # "🔍 Basin Similarity"
         st.markdown('<div class="sub-header">📊 Basin Clusters</div>', unsafe_allow_html=True)
         
         # Simple clustering based on t-SNE
-        tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(embeddings)-1))
-        coords = tsne.fit_transform(embeddings)
-        
-        # Create cluster visualization
-        fig = go.Figure()
-        
-        # Add points colored by k-means-like clustering
-        from sklearn.cluster import KMeans
-        n_clusters = min(4, len(embeddings))
-        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-        labels = kmeans.fit_predict(coords)
-        
-        colors = ['#fc8181', '#68d391', '#63b3ed', '#f6ad55', '#b794f4', '#f687b3']
-        
-        for i in range(n_clusters):
-            mask = labels == i
-            fig.add_trace(go.Scatter(
-                x=coords[mask, 0],
-                y=coords[mask, 1],
-                mode='markers',
-                marker=dict(size=12, color=colors[i % len(colors)], opacity=0.7),
-                text=[f'Basin {j}' for j in np.where(mask)[0]],
-                name=f'Cluster {i+1}',
-                hovertemplate='%{text}<extra></extra>'
-            ))
-        
-        fig.update_layout(
-            template='plotly_dark',
-            title='Basin Clusters in Embedding Space',
-            height=400,
-            showlegend=True,
-            margin=dict(l=20, r=20, t=40, b=20),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+        if len(embeddings) > 1:
+            tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(embeddings)-1))
+            coords = tsne.fit_transform(embeddings)
+            
+            # Create cluster visualization
+            fig = go.Figure()
+            
+            # Add points colored by k-means-like clustering
+            n_clusters = min(4, len(embeddings))
+            if n_clusters > 1:
+                kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+                labels = kmeans.fit_predict(coords)
+                
+                colors = ['#fc8181', '#68d391', '#63b3ed', '#f6ad55', '#b794f4', '#f687b3']
+                
+                for i in range(n_clusters):
+                    mask = labels == i
+                    fig.add_trace(go.Scatter(
+                        x=coords[mask, 0],
+                        y=coords[mask, 1],
+                        mode='markers',
+                        marker=dict(size=12, color=colors[i % len(colors)], opacity=0.7),
+                        text=[f'Basin {j}' for j in np.where(mask)[0]],
+                        name=f'Cluster {i+1}',
+                        hovertemplate='%{text}<extra></extra>'
+                    ))
+            else:
+                # If only one cluster, just show all points
+                fig.add_trace(go.Scatter(
+                    x=coords[:, 0],
+                    y=coords[:, 1],
+                    mode='markers',
+                    marker=dict(size=12, color='#63b3ed', opacity=0.7),
+                    text=[f'Basin {j}' for j in range(len(embeddings))],
+                    name='All Basins',
+                    hovertemplate='%{text}<extra></extra>'
+                ))
+            
+            fig.update_layout(
+                template='plotly_dark',
+                title='Basin Clusters in Embedding Space',
+                height=400,
+                showlegend=True,
+                margin=dict(l=20, r=20, t=40, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
 
 # ============================================
 # FOOTER
