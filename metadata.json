@@ -1,0 +1,14 @@
+{
+    "dataset": "HydroFoundation BASINGRID",
+    "basins": 71,
+    "channels": 15,
+    "height": 64,
+    "width": 64,
+    "variables": [
+        "dem",
+        "clay",
+        "bdod",
+        "hydraulic_conductivity",
+        "agriculture"
+    ]
+}
