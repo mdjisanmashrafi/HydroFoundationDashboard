@@ -1,0 +1,356 @@
+basin_id,feature,importance
+Basin_001,Agriculture,-0.002
+Basin_001,Clay,0.751
+Basin_001,Bulk Density,0.805
+Basin_001,Hydraulic Conductivity,-0.0
+Basin_001,Elevation,-0.554
+Basin_002,Agriculture,-0.0
+Basin_002,Clay,0.524
+Basin_002,Bulk Density,0.542
+Basin_002,Hydraulic Conductivity,-0.0
+Basin_002,Elevation,-0.066
+Basin_003,Agriculture,-0.001
+Basin_003,Clay,0.595
+Basin_003,Bulk Density,0.636
+Basin_003,Hydraulic Conductivity,-0.0
+Basin_003,Elevation,-0.231
+Basin_004,Agriculture,-0.006
+Basin_004,Clay,1.275
+Basin_004,Bulk Density,1.54
+Basin_004,Hydraulic Conductivity,-0.0
+Basin_004,Elevation,-1.809
+Basin_005,Agriculture,-0.001
+Basin_005,Clay,0.568
+Basin_005,Bulk Density,0.608
+Basin_005,Hydraulic Conductivity,-0.0
+Basin_005,Elevation,-0.176
+Basin_006,Agriculture,-0.0
+Basin_006,Clay,0.534
+Basin_006,Bulk Density,0.554
+Basin_006,Hydraulic Conductivity,-0.0
+Basin_006,Elevation,-0.088
+Basin_007,Agriculture,-0.002
+Basin_007,Clay,0.671
+Basin_007,Bulk Density,0.8
+Basin_007,Hydraulic Conductivity,-0.0
+Basin_007,Elevation,-0.469
+Basin_008,Agriculture,-0.001
+Basin_008,Clay,0.539
+Basin_008,Bulk Density,0.564
+Basin_008,Hydraulic Conductivity,-0.0
+Basin_008,Elevation,-0.103
+Basin_009,Agriculture,-0.0
+Basin_009,Clay,0.542
+Basin_009,Bulk Density,0.552
+Basin_009,Hydraulic Conductivity,-0.0
+Basin_009,Elevation,-0.093
+Basin_010,Agriculture,-0.001
+Basin_010,Clay,0.582
+Basin_010,Bulk Density,0.603
+Basin_010,Hydraulic Conductivity,-0.0
+Basin_010,Elevation,-0.184
+Basin_011,Agriculture,0.011
+Basin_011,Clay,-0.294
+Basin_011,Bulk Density,-0.469
+Basin_011,Hydraulic Conductivity,0.0
+Basin_011,Elevation,1.753
+Basin_012,Agriculture,-0.0
+Basin_012,Clay,0.504
+Basin_012,Bulk Density,0.504
+Basin_012,Hydraulic Conductivity,-0.0
+Basin_012,Elevation,-0.008
+Basin_013,Agriculture,-0.0
+Basin_013,Clay,0.503
+Basin_013,Bulk Density,0.505
+Basin_013,Hydraulic Conductivity,-0.0
+Basin_013,Elevation,-0.008
+Basin_014,Agriculture,0.004
+Basin_014,Clay,0.333
+Basin_014,Bulk Density,0.385
+Basin_014,Hydraulic Conductivity,0.0
+Basin_014,Elevation,0.278
+Basin_015,Agriculture,-0.0
+Basin_015,Clay,0.517
+Basin_015,Bulk Density,0.516
+Basin_015,Hydraulic Conductivity,-0.0
+Basin_015,Elevation,-0.032
+Basin_016,Agriculture,-0.0
+Basin_016,Clay,0.512
+Basin_016,Bulk Density,0.512
+Basin_016,Hydraulic Conductivity,-0.0
+Basin_016,Elevation,-0.023
+Basin_017,Agriculture,-0.0
+Basin_017,Clay,0.523
+Basin_017,Bulk Density,0.514
+Basin_017,Hydraulic Conductivity,-0.0
+Basin_017,Elevation,-0.037
+Basin_018,Agriculture,-0.001
+Basin_018,Clay,0.538
+Basin_018,Bulk Density,0.538
+Basin_018,Hydraulic Conductivity,-0.0
+Basin_018,Elevation,-0.075
+Basin_019,Agriculture,-0.001
+Basin_019,Clay,0.545
+Basin_019,Bulk Density,0.539
+Basin_019,Hydraulic Conductivity,-0.0
+Basin_019,Elevation,-0.083
+Basin_020,Agriculture,-0.0
+Basin_020,Clay,0.529
+Basin_020,Bulk Density,0.529
+Basin_020,Hydraulic Conductivity,-0.0
+Basin_020,Elevation,-0.058
+Basin_021,Agriculture,-0.006
+Basin_021,Clay,2.027
+Basin_021,Bulk Density,2.032
+Basin_021,Hydraulic Conductivity,-0.0
+Basin_021,Elevation,-3.052
+Basin_022,Agriculture,-0.0
+Basin_022,Clay,0.535
+Basin_022,Bulk Density,0.55
+Basin_022,Hydraulic Conductivity,-0.0
+Basin_022,Elevation,-0.085
+Basin_023,Agriculture,-0.0
+Basin_023,Clay,0.534
+Basin_023,Bulk Density,0.538
+Basin_023,Hydraulic Conductivity,-0.0
+Basin_023,Elevation,-0.072
+Basin_024,Agriculture,-0.0
+Basin_024,Clay,0.538
+Basin_024,Bulk Density,0.538
+Basin_024,Hydraulic Conductivity,-0.0
+Basin_024,Elevation,-0.076
+Basin_025,Agriculture,-0.001
+Basin_025,Clay,0.563
+Basin_025,Bulk Density,0.573
+Basin_025,Hydraulic Conductivity,-0.0
+Basin_025,Elevation,-0.136
+Basin_026,Agriculture,-0.001
+Basin_026,Clay,0.693
+Basin_026,Bulk Density,0.663
+Basin_026,Hydraulic Conductivity,-0.0
+Basin_026,Elevation,-0.355
+Basin_027,Agriculture,-0.001
+Basin_027,Clay,0.672
+Basin_027,Bulk Density,0.655
+Basin_027,Hydraulic Conductivity,-0.0
+Basin_027,Elevation,-0.326
+Basin_028,Agriculture,-0.001
+Basin_028,Clay,0.669
+Basin_028,Bulk Density,0.648
+Basin_028,Hydraulic Conductivity,-0.0
+Basin_028,Elevation,-0.316
+Basin_029,Agriculture,-0.001
+Basin_029,Clay,0.562
+Basin_029,Bulk Density,0.569
+Basin_029,Hydraulic Conductivity,-0.0
+Basin_029,Elevation,-0.13
+Basin_030,Agriculture,-0.0
+Basin_030,Clay,0.538
+Basin_030,Bulk Density,0.533
+Basin_030,Hydraulic Conductivity,-0.0
+Basin_030,Elevation,-0.07
+Basin_031,Agriculture,-0.001
+Basin_031,Clay,0.673
+Basin_031,Bulk Density,0.646
+Basin_031,Hydraulic Conductivity,-0.0
+Basin_031,Elevation,-0.318
+Basin_032,Agriculture,-0.0
+Basin_032,Clay,0.571
+Basin_032,Bulk Density,0.562
+Basin_032,Hydraulic Conductivity,-0.0
+Basin_032,Elevation,-0.133
+Basin_033,Agriculture,-0.0
+Basin_033,Clay,0.536
+Basin_033,Bulk Density,0.537
+Basin_033,Hydraulic Conductivity,-0.0
+Basin_033,Elevation,-0.073
+Basin_034,Agriculture,-0.0
+Basin_034,Clay,0.512
+Basin_034,Bulk Density,0.513
+Basin_034,Hydraulic Conductivity,-0.0
+Basin_034,Elevation,-0.025
+Basin_035,Agriculture,-0.003
+Basin_035,Clay,0.587
+Basin_035,Bulk Density,0.666
+Basin_035,Hydraulic Conductivity,-0.0
+Basin_035,Elevation,-0.251
+Basin_036,Agriculture,-0.0
+Basin_036,Clay,0.516
+Basin_036,Bulk Density,0.515
+Basin_036,Hydraulic Conductivity,-0.0
+Basin_036,Elevation,-0.031
+Basin_037,Agriculture,-0.001
+Basin_037,Clay,0.523
+Basin_037,Bulk Density,0.536
+Basin_037,Hydraulic Conductivity,-0.0
+Basin_037,Elevation,-0.058
+Basin_038,Agriculture,-0.0
+Basin_038,Clay,0.529
+Basin_038,Bulk Density,0.528
+Basin_038,Hydraulic Conductivity,-0.0
+Basin_038,Elevation,-0.057
+Basin_039,Agriculture,-0.0
+Basin_039,Clay,0.532
+Basin_039,Bulk Density,0.531
+Basin_039,Hydraulic Conductivity,-0.0
+Basin_039,Elevation,-0.064
+Basin_040,Agriculture,-0.0
+Basin_040,Clay,0.585
+Basin_040,Bulk Density,0.576
+Basin_040,Hydraulic Conductivity,-0.0
+Basin_040,Elevation,-0.16
+Basin_041,Agriculture,-0.001
+Basin_041,Clay,0.883
+Basin_041,Bulk Density,0.853
+Basin_041,Hydraulic Conductivity,-0.0
+Basin_041,Elevation,-0.735
+Basin_042,Agriculture,-0.0
+Basin_042,Clay,0.612
+Basin_042,Bulk Density,0.603
+Basin_042,Hydraulic Conductivity,-0.0
+Basin_042,Elevation,-0.215
+Basin_043,Agriculture,-0.001
+Basin_043,Clay,0.79
+Basin_043,Bulk Density,0.737
+Basin_043,Hydraulic Conductivity,-0.0
+Basin_043,Elevation,-0.525
+Basin_044,Agriculture,-0.0
+Basin_044,Clay,0.543
+Basin_044,Bulk Density,0.541
+Basin_044,Hydraulic Conductivity,-0.0
+Basin_044,Elevation,-0.083
+Basin_045,Agriculture,-0.003
+Basin_045,Clay,1.07
+Basin_045,Bulk Density,0.97
+Basin_045,Hydraulic Conductivity,-0.0
+Basin_045,Elevation,-1.038
+Basin_046,Agriculture,-0.0
+Basin_046,Clay,0.549
+Basin_046,Bulk Density,0.545
+Basin_046,Hydraulic Conductivity,-0.0
+Basin_046,Elevation,-0.094
+Basin_047,Agriculture,-0.003
+Basin_047,Clay,1.47
+Basin_047,Bulk Density,1.321
+Basin_047,Hydraulic Conductivity,-0.0
+Basin_047,Elevation,-1.788
+Basin_048,Agriculture,-0.001
+Basin_048,Clay,0.702
+Basin_048,Bulk Density,0.68
+Basin_048,Hydraulic Conductivity,-0.0
+Basin_048,Elevation,-0.381
+Basin_049,Agriculture,-0.001
+Basin_049,Clay,0.678
+Basin_049,Bulk Density,0.67
+Basin_049,Hydraulic Conductivity,-0.0
+Basin_049,Elevation,-0.347
+Basin_050,Agriculture,-0.0
+Basin_050,Clay,0.522
+Basin_050,Bulk Density,0.525
+Basin_050,Hydraulic Conductivity,-0.0
+Basin_050,Elevation,-0.046
+Basin_051,Agriculture,-0.0
+Basin_051,Clay,0.535
+Basin_051,Bulk Density,0.536
+Basin_051,Hydraulic Conductivity,-0.0
+Basin_051,Elevation,-0.07
+Basin_052,Agriculture,-0.0
+Basin_052,Clay,0.505
+Basin_052,Bulk Density,0.507
+Basin_052,Hydraulic Conductivity,-0.0
+Basin_052,Elevation,-0.012
+Basin_053,Agriculture,0.001
+Basin_053,Clay,0.012
+Basin_053,Bulk Density,0.056
+Basin_053,Hydraulic Conductivity,0.0
+Basin_053,Elevation,0.93
+Basin_054,Agriculture,-0.0
+Basin_054,Clay,0.566
+Basin_054,Bulk Density,0.56
+Basin_054,Hydraulic Conductivity,-0.0
+Basin_054,Elevation,-0.126
+Basin_055,Agriculture,-0.0
+Basin_055,Clay,0.573
+Basin_055,Bulk Density,0.567
+Basin_055,Hydraulic Conductivity,-0.0
+Basin_055,Elevation,-0.14
+Basin_056,Agriculture,-0.0
+Basin_056,Clay,0.577
+Basin_056,Bulk Density,0.569
+Basin_056,Hydraulic Conductivity,-0.0
+Basin_056,Elevation,-0.146
+Basin_057,Agriculture,0.001
+Basin_057,Clay,0.118
+Basin_057,Bulk Density,0.147
+Basin_057,Hydraulic Conductivity,0.0
+Basin_057,Elevation,0.733
+Basin_058,Agriculture,-0.002
+Basin_058,Clay,1.0
+Basin_058,Bulk Density,0.909
+Basin_058,Hydraulic Conductivity,-0.0
+Basin_058,Elevation,-0.908
+Basin_059,Agriculture,-0.0
+Basin_059,Clay,0.615
+Basin_059,Bulk Density,0.602
+Basin_059,Hydraulic Conductivity,-0.0
+Basin_059,Elevation,-0.217
+Basin_060,Agriculture,0.006
+Basin_060,Clay,-1.291
+Basin_060,Bulk Density,-1.006
+Basin_060,Hydraulic Conductivity,0.0
+Basin_060,Elevation,3.29
+Basin_061,Agriculture,-0.001
+Basin_061,Clay,0.608
+Basin_061,Bulk Density,0.595
+Basin_061,Hydraulic Conductivity,-0.0
+Basin_061,Elevation,-0.202
+Basin_062,Agriculture,-0.001
+Basin_062,Clay,0.626
+Basin_062,Bulk Density,0.621
+Basin_062,Hydraulic Conductivity,-0.0
+Basin_062,Elevation,-0.246
+Basin_063,Agriculture,-0.0
+Basin_063,Clay,0.527
+Basin_063,Bulk Density,0.525
+Basin_063,Hydraulic Conductivity,-0.0
+Basin_063,Elevation,-0.051
+Basin_064,Agriculture,-0.0
+Basin_064,Clay,0.588
+Basin_064,Bulk Density,0.579
+Basin_064,Hydraulic Conductivity,-0.0
+Basin_064,Elevation,-0.166
+Basin_065,Agriculture,-0.0
+Basin_065,Clay,0.501
+Basin_065,Bulk Density,0.509
+Basin_065,Hydraulic Conductivity,-0.0
+Basin_065,Elevation,-0.01
+Basin_066,Agriculture,-0.001
+Basin_066,Clay,0.48
+Basin_066,Bulk Density,0.569
+Basin_066,Hydraulic Conductivity,-0.0
+Basin_066,Elevation,-0.049
+Basin_067,Agriculture,-0.0
+Basin_067,Clay,0.51
+Basin_067,Bulk Density,0.508
+Basin_067,Hydraulic Conductivity,-0.0
+Basin_067,Elevation,-0.017
+Basin_068,Agriculture,-0.0
+Basin_068,Clay,0.506
+Basin_068,Bulk Density,0.509
+Basin_068,Hydraulic Conductivity,-0.0
+Basin_068,Elevation,-0.015
+Basin_069,Agriculture,0.001
+Basin_069,Clay,-0.063
+Basin_069,Bulk Density,-0.032
+Basin_069,Hydraulic Conductivity,0.0
+Basin_069,Elevation,1.094
+Basin_070,Agriculture,0.007
+Basin_070,Clay,-1.057
+Basin_070,Bulk Density,-0.731
+Basin_070,Hydraulic Conductivity,0.0
+Basin_070,Elevation,2.781
+Basin_071,Agriculture,-0.002
+Basin_071,Clay,1.168
+Basin_071,Bulk Density,1.086
+Basin_071,Hydraulic Conductivity,-0.0
+Basin_071,Elevation,-1.252
